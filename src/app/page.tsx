@@ -6,8 +6,10 @@ import { LampSlider, type LampSliderHandle } from "@/components/LampSlider";
 import { PermissionGate } from "@/components/PermissionGate";
 import { WebcamPreview } from "@/components/WebcamPreview";
 import { GestureHint } from "@/components/GestureHint";
+import { LightStatusPill } from "@/components/LightStatusPill";
 import { useHandTracking, type HandFrame } from "@/hooks/useHandTracking";
 import { useGestureToSlider } from "@/hooks/useGestureToSlider";
+import { usePinchToLight } from "@/hooks/usePinchToLight";
 import { LAMPS } from "@/lib/lamps";
 
 export default function HomePage() {
@@ -16,14 +18,21 @@ export default function HomePage() {
 
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [recentlyOffLampId, setRecentlyOffLampId] = useState<string | null>(null);
 
   const { onFrame: onGestureFrame, feedback } = useGestureToSlider(sliderRef);
+  const {
+    onFrame: onPinchFrame,
+    feedback: pinchFeedback,
+    notifyFire,
+  } = usePinchToLight();
 
   const handleFrame = useCallback(
     (frame: HandFrame | null) => {
       onGestureFrame(frame);
+      onPinchFrame(frame);
     },
-    [onGestureFrame],
+    [onGestureFrame, onPinchFrame],
   );
 
   const { status, error, hasHand, stop } = useHandTracking({
@@ -32,6 +41,13 @@ export default function HomePage() {
     onFrame: handleFrame,
   });
 
+  // Swipe vừa fire → suppress pinch 300ms để pha rút tay không kích nhầm.
+  useEffect(() => {
+    if (feedback.cooling) {
+      notifyFire(performance.now());
+    }
+  }, [feedback.cooling, notifyFire]);
+
   useEffect(() => {
     if (status === "denied" || status === "error") {
       setCameraEnabled(false);
@@ -39,6 +55,36 @@ export default function HomePage() {
   }, [status]);
 
   const lamp = LAMPS[selectedIdx];
+  const litLamp = pinchFeedback.isPinching ? lamp : null;
+  const litLampId = litLamp?.id ?? null;
+
+  // Ghi nhớ lamp vừa tắt để hiển thị "vừa tắt" ~1.5s.
+  useEffect(() => {
+    if (litLampId) {
+      setRecentlyOffLampId(null);
+      return;
+    }
+    // isPinching vừa false → nếu trước đó có lamp sáng thì show "vừa tắt"
+  }, [litLampId]);
+
+  // Listen transition from on → off
+  const prevLitRef = useRef<string | null>(null);
+  useEffect(() => {
+    const prev = prevLitRef.current;
+    if (prev && !litLampId) {
+      setRecentlyOffLampId(prev);
+      const id = window.setTimeout(() => setRecentlyOffLampId(null), 1500);
+      prevLitRef.current = null;
+      return () => window.clearTimeout(id);
+    }
+    prevLitRef.current = litLampId;
+  }, [litLampId]);
+
+  const recentlyOffLamp =
+    recentlyOffLampId != null
+      ? LAMPS.find((l) => l.id === recentlyOffLampId) ?? null
+      : null;
+
   const busyStatuses: ReadonlySet<typeof status> = new Set([
     "running",
     "loading-model",
@@ -48,7 +94,12 @@ export default function HomePage() {
 
   return (
     <main className="relative min-h-screen overflow-x-hidden pb-16">
-      <div className="eoi-stage-gradient pointer-events-none absolute inset-0 -z-10" />
+      <div
+        className={[
+          "eoi-stage-gradient pointer-events-none absolute inset-0 -z-10 transition-opacity duration-500",
+          litLamp ? "opacity-100 saturate-150" : "opacity-100",
+        ].join(" ")}
+      />
 
       <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
         <div className="flex items-center gap-2">
@@ -72,7 +123,8 @@ export default function HomePage() {
             </h1>
             <p className="max-w-xl text-base text-eoi-ink2">
               Đưa bàn tay vào khung camera rồi vuốt nhanh sang trái hoặc phải —
-              như lướt điện thoại, nhưng không chạm gì.
+              như lướt điện thoại, nhưng không chạm gì. Chụm ngón cái + ngón trỏ
+              để thắp sáng đèn đang chọn.
             </p>
             <PermissionGate
               onEnable={() => setCameraEnabled(true)}
@@ -91,7 +143,11 @@ export default function HomePage() {
         )}
 
         <div className="relative">
-          <LampSlider ref={sliderRef} onSelect={setSelectedIdx} />
+          <LampSlider
+            ref={sliderRef}
+            onSelect={setSelectedIdx}
+            litLampId={litLampId}
+          />
         </div>
 
         {!showExperience && (
@@ -102,12 +158,17 @@ export default function HomePage() {
       </section>
 
       {showExperience && (
+        <LightStatusPill litLamp={litLamp} recentlyOffLamp={recentlyOffLamp} />
+      )}
+
+      {showExperience && (
         <div className="pointer-events-auto fixed right-4 top-4 z-40 w-[320px] max-w-[calc(100vw-2rem)] sm:w-[360px]">
           <WebcamPreview
             ref={videoRef}
             status={status}
             hasHand={hasHand}
             feedback={feedback}
+            pinch={pinchFeedback}
             onStop={() => {
               stop();
               setCameraEnabled(false);

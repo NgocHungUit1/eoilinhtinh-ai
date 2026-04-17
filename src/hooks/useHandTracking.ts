@@ -8,8 +8,10 @@ export type HandFrame = {
   x: number;
   /** y: 0 = trên, 1 = dưới. */
   y: number;
-  /** ngón cái + ngón trỏ dưới 0.05 (normalized) → pinch. */
-  pinch: boolean;
+  /** Tỉ lệ khoảng cách thumb-tip ↔ index-tip so với hand scale
+   *  (wrist → middle-MCP). < ~0.25 là chụm, > ~0.4 là xoè. Không phụ thuộc
+   *  tay gần/xa camera. */
+  pinchRatio: number;
   /** timestamp ms để callback tính velocity. */
   t: number;
 };
@@ -150,14 +152,20 @@ export function useHandTracking({ videoRef, onFrame, enabled }: Options) {
               // (từ góc nhìn mình) tương ứng x nhỏ. Đảo lại để vx > 0 = user's right.
               const thumbTip = lm[4];
               const indexTip = lm[8];
+              const wrist = lm[0];
+              const middleMcp = lm[9];
               const pinchDist = Math.hypot(
                 thumbTip.x - indexTip.x,
                 thumbTip.y - indexTip.y,
               );
+              const handScale = Math.max(
+                0.02,
+                Math.hypot(middleMcp.x - wrist.x, middleMcp.y - wrist.y),
+              );
               const frame: HandFrame = {
                 x: 1 - avgX,
                 y: avgY,
-                pinch: pinchDist < 0.06,
+                pinchRatio: pinchDist / handScale,
                 t: performance.now(),
               };
               setHasHand(true);

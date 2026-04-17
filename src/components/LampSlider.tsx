@@ -15,10 +15,11 @@ export type LampSliderHandle = {
 
 type Props = {
   onSelect?: (index: number) => void;
+  litLampId?: string | null;
 };
 
 export const LampSlider = forwardRef<LampSliderHandle, Props>(function LampSlider(
-  { onSelect },
+  { onSelect, litLampId },
   ref,
 ) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
@@ -81,7 +82,11 @@ export const LampSlider = forwardRef<LampSliderHandle, Props>(function LampSlide
               style={{ flexBasis: "clamp(240px, 70vw, 380px)" }}
             >
               <div className="aspect-[4/5]">
-                <LampCard lamp={lamp} isActive={i === selected} />
+                <LampCard
+                  lamp={lamp}
+                  isActive={i === selected}
+                  isLit={litLampId === lamp.id}
+                />
               </div>
             </div>
           ))}

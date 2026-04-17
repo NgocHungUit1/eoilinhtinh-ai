@@ -1,14 +1,16 @@
 "use client";
 
 import { forwardRef } from "react";
-import { ArrowLeft, ArrowRight, Camera, Loader2, PowerOff } from "lucide-react";
+import { ArrowLeft, ArrowRight, Camera, Lightbulb, Loader2, PowerOff } from "lucide-react";
 import type { HandTrackingStatus } from "@/hooks/useHandTracking";
 import type { SwipeFeedback } from "@/hooks/useGestureToSlider";
+import type { PinchFeedback } from "@/hooks/usePinchToLight";
 
 type Props = {
   status: HandTrackingStatus;
   hasHand: boolean;
   feedback: SwipeFeedback;
+  pinch: PinchFeedback;
   onStop: () => void;
 };
 
@@ -17,7 +19,7 @@ type Props = {
  * khung để user biết hệ thống đang "nạp lại" — không phải bị treo.
  */
 export const WebcamPreview = forwardRef<HTMLVideoElement, Props>(
-  function WebcamPreview({ status, hasHand, feedback, onStop }, videoRef) {
+  function WebcamPreview({ status, hasHand, feedback, pinch, onStop }, videoRef) {
     const { progress, direction, justFired, cooling, cooldownProgress } = feedback;
     const barPct = Math.round((cooling ? cooldownProgress : progress) * 100);
 
@@ -112,6 +114,14 @@ export const WebcamPreview = forwardRef<HTMLVideoElement, Props>(
               <PowerOff className="h-3.5 w-3.5" />
               Tắt cam
             </button>
+          )}
+
+          {/* Pinch indicator — hiện khi đang chụm ngón */}
+          {status === "running" && pinch.isPinching && (
+            <div className="pointer-events-none absolute bottom-3 left-3 flex items-center gap-1.5 rounded-full bg-amber-400/95 px-2.5 py-1 text-[11px] font-semibold text-amber-950 shadow-[0_0_16px_rgba(251,191,36,0.7)] animate-fade-in">
+              <Lightbulb className="h-3.5 w-3.5" fill="currentColor" fillOpacity={0.3} />
+              Đang bật
+            </div>
           )}
         </div>
 

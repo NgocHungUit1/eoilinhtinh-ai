@@ -6,6 +6,7 @@ out
 !.env.example
 *.tsbuildinfo
 next-env.d.ts
+.claude/
 
 # MediaPipe WASM (~33MB) — auto-copied từ node_modules/@mediapipe/tasks-vision/wasm
 # bởi scripts/copy-mediapipe.mjs trong postinstall/predev/prebuild.
