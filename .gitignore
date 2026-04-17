@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+.DS_Store
+.env*
+!.env.example
+*.tsbuildinfo
+next-env.d.ts
+
+# MediaPipe WASM (~33MB) — auto-copied từ node_modules/@mediapipe/tasks-vision/wasm
+# bởi scripts/copy-mediapipe.mjs trong postinstall/predev/prebuild.
+public/mediapipe/wasm/

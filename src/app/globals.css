@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --eoi-pink: #f472b6;
+  --eoi-pink-dark: #be185d;
+  --eoi-pink-light: #fce7f3;
+  --eoi-blue: #3b82f6;
+  --eoi-blue-dark: #1d4ed8;
+  --eoi-blue-light: #dbeafe;
+  --eoi-amber: #f59e0b;
+  --eoi-amber-dark: #b45309;
+  --eoi-amber-light: #fef3c7;
+  --eoi-ink: #111111;
+  --eoi-ink2: #444444;
+  --eoi-surface: #fafafa;
+  --eoi-border: #ebebeb;
+  --eoi-bg: #f5f3ef;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background-color: var(--eoi-bg);
+  color: var(--eoi-ink);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: contain;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Embla: cho phép slide dài hơn container để căn giữa slide active */
+.embla {
+  overflow: hidden;
+}
+.embla__container {
+  display: flex;
+  touch-action: pan-y pinch-zoom;
+}
+.embla__slide {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/* Vùng gradient nền mềm phía sau slider */
+.eoi-stage-gradient {
+  background:
+    radial-gradient(
+      1200px 600px at 20% 0%,
+      rgba(244, 114, 182, 0.18),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 500px at 90% 30%,
+      rgba(59, 130, 246, 0.15),
+      transparent 60%
+    ),
+    radial-gradient(
+      700px 400px at 50% 110%,
+      rgba(245, 158, 11, 0.18),
+      transparent 60%
+    );
+}
